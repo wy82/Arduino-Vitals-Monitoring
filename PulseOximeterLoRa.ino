@@ -26,6 +26,7 @@ bioData body;
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
+int16_t packetnum = 0;  // packet counter, we increment per xmission
 
 void setup() {
   // LoRa Setup
@@ -94,29 +95,34 @@ void setup() {
 void loop() {
   // read pulse oximeter information
   body = bioHub.readBpm();
-  Serial.print("Heartrate: ");
-  Serial.println(body.heartRate); 
-  Serial.print("Confidence: ");
-  Serial.println(body.confidence); 
-  Serial.print("Oxygen: ");
-  Serial.println(body.oxygen); 
-  Serial.print("Status: ");
-  Serial.println(body.status); 
-  Serial.print("Extended Status: ");
-  Serial.println(body.extStatus); 
-  Serial.print("Blood Oxygen R value: ");
-  Serial.println(body.rValue); 
   
   Serial.println("Sending to rf95_server");
   // Send a message to rf95_server
  
-  char radiopacket[20] = "Hello World #      ";
-  itoa(packetnum++, radiopacket+13, 10);
-  Serial.print("Sending "); Serial.println(radiopacket);
-  radiopacket[19] = 0;
+  //char radiopacket[22] = "Goodbye World #      ";
+  //itoa(packetnum++, radiopacket+15, 10);
+  char heartratepacket[20] = "Heart Rate:         ";
+  itoa(body.heartRate, heartratepacket+12, 10);
+
+  char oxygenpacket[20] = "Oxygen:             ";
+  itoa(body.oxygen, oxygenpacket+8, 10);
+
+  char confidencepacket[20] = "Confidence:        ";
+  itoa(body.confidence, confidencepacket+13, 10);
+  
+  Serial.print("Sending "); Serial.println(heartratepacket);
+  heartratepacket[19] = 0;
+  Serial.print("Sending "); Serial.println(oxygenpacket);
+  oxygenpacket[19] = 0;
+  Serial.print("Sending "); Serial.println(confidencepacket);
+  confidencepacket[19] = 0;
  
   Serial.println("Sending..."); delay(10);
-  rf95.send((uint8_t *)radiopacket, 20);
+  rf95.send((uint8_t *)heartratepacket, 20);
+  delay(1000);
+  rf95.send((uint8_t *)oxygenpacket, 20);
+  delay(1000);
+  rf95.send((uint8_t *)confidencepacket, 20);
  
   Serial.println("Waiting for packet to complete..."); delay(10);
   rf95.waitPacketSent();
